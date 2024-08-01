@@ -32,11 +32,11 @@ stages:
         pool:
           vmImage: ${{ parameters.agentImage }}
         steps:
-          - template: steps/twingate-connect.yaml
+          - template: ../steps/twingate-connect.yaml
             parameters:
               keyVaultName: ${{ parameters.keyVaultName }}
               serviceKeySecretName: ${{ parameters.serviceKeySecretName }}
               serviceConnection: ${{ parameters.serviceConnection }}
-          - template: steps/check-hosts-online.yaml
+          - template: ../steps/check-hosts-online.yaml
             parameters:
               hosts: ${{ parameters.hosts }}
