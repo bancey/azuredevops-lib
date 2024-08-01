@@ -1,7 +1,9 @@
 parameters:
   - name: name
+    displayName: The name of the host.
     type: string
   - name: addresses
+    displayName: The IP address or FQDN of the host.
     type: string
 
 steps:

@@ -1,9 +1,12 @@
 parameters:
   - name: keyVaultName
+    displayName: The name of the Azure KeyVault that contains the secrets required to connect to Twingate.
     type: string
   - name: serviceKeySecretName
+    displayName: The name of the secret within the Azure KeyVault that contains the service key required to connect to Twingate.
     type: string
   - name: serviceConnection
+    displayName: The service connection to use to authenticate to Azure CLI.
     type: string
 steps:
   - checkout: self
