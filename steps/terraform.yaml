@@ -55,8 +55,8 @@ steps:
       backendServiceArm: ${{ parameters.serviceConnection }}
       backendAzureRmResourceGroupName: ${{ parameters.backendResourceGroupName }}
       backendAzureRmResourceGroupLocation: ${{ parameters.backendResourceGroupLocation }}
-      backendAzureRmStorageAccountName: ${{ parameters.storageAccount }}
-      backendAzureRmStorageAccountSku: ${{ paramters.backendStorageAccountSku }}
+      backendAzureRmStorageAccountName: ${{ parameters.backendStorageAccount }}
+      backendAzureRmStorageAccountSku: ${{ parameters.backendStorageAccountSku }}
       backendAzureRmContainerName: ${{ parameters.backendContainer }}
       backendAzureRmKey: ${{ parameters.azureRmKey }}
   - task: TerraformCLI@0
