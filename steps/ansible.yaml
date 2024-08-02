@@ -42,7 +42,7 @@ steps:
       artifactName: 'ansible'
       targetPath: $(System.DefaultWorkingDirectory)/ansible
       itemPattern: hosts.yaml
-  - ${{ if and(ne(parameters.playbook, ""), ne(variables['Build.SourceBranch'], 'refs/heads/master')) }}:
+  - ${{ if and(ne(parameters.playbook, ''), ne(variables['Build.SourceBranch'], 'refs/heads/master')) }}:
     - task: AzureCLI@2
       displayName: Check/Run Ansible Playbook
       inputs:
@@ -63,7 +63,7 @@ steps:
           ansible-playbook --syntax-check --inventory $(System.DefaultWorkingDirectory)/ansible/hosts.yaml ${{ parameters.playbook }} --extra-vars "$EXTRA_VARS"
           ansible-playbook --check --inventory $(System.DefaultWorkingDirectory)/ansible/hosts.yaml ${{ parameters.playbook }} --extra-vars "$EXTRA_VARS"
         workingDirectory: $(System.DefaultWorkingDirectory)/ansible
-  - ${{ if and(ne(parameters.playbook, ""), eq(variables['Build.SourceBranch'], 'refs/heads/master')) }}:
+  - ${{ if and(ne(parameters.playbook, ''), eq(variables['Build.SourceBranch'], 'refs/heads/master')) }}:
     - task: AzureCLI@2
       displayName: Run Ansible Playbook
       inputs:
