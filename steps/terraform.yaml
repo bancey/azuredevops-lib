@@ -19,8 +19,6 @@ parameters:
     type: string
   - name: serviceConnection
     type: string
-  - name: workingDirectory
-    type: string
   - name: variableFilePath
     type: string
   - name: env
