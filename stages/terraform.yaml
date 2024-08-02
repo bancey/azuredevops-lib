@@ -1,0 +1,80 @@
+parameters:
+  - name: stageName
+    displayName: The name of the stage, defaults to check_hosts_online
+    type: string
+    default: terraform_plan_apply
+  - name: dependencies
+    displayName: A stage name or list of stage names this stage should depend on.
+    type: object
+    default: []
+  - name: condition
+    displayName: The condition which must be met for the stage to run.
+    type: string
+    default: succeeded()
+  - name: agentImage
+    displayName: The image to use from the Microsoft Hosted agent pool.
+    type: string
+    default: ubuntu-latest
+  - name: backendResourceGroupName
+    type: string
+    default: tfstate-rg
+  - name: backendResourceGroupLocation
+    type: string
+    default: uksouth
+  - name: backendStorageAccountSku
+    type: string
+    default: Standard_LRS
+  - name: backendContainer
+    type: string
+    default: tfstate
+  - name: backendStorageAccount
+    type: string
+  - name: workingDirectory
+    type: string
+  - name: azureRmKey
+    type: string
+  - name: serviceConnection
+    type: string
+  - name: variableFilePath
+    type: string
+  - name: env
+    type: object
+    default: {}
+  - name: extraCommandArgs
+    type: string
+    default: ""
+  - name: parallelism
+    type: number
+    default: -1
+  - name: runApply
+    type: boolean
+  - name: runDestroy
+    type: boolean
+
+stages:
+  - stage: ${{ parameters.stageName }}
+    dependsOn: ${{ parameters.dependencies }}
+    condition: ${{ parameters.condition }}
+    jobs:
+      - job: ${{ parameters.stageName }}
+        pool:
+          vmImage: ${{ parameters.agentImage }}
+        steps:
+          - template: ../steps/terraform.yaml
+            parameters:
+              backendResourceGroupName: ${{ parameter.backendResourceGroupName }}
+              backendResourceGroupLocation: ${{ parameter.backendResourceGroupLocation }}
+              backendStorageAccountSku: ${{ parameter.backendStorageAccountSku }}
+              backendContainer: ${{ parameter.backendContainer }}
+              backendStorageAccount: ${{ parameter.backendStorageAccount }}
+              workingDirectory: ${{ parameter.workingDirectory }}
+              azureRmKey: ${{ parameter.azureRmKey }}
+              serviceConnection: ${{ parameter.serviceConnection }}
+              variableFilePath: ${{ parameter.variableFilePath }}
+              env: ${{ parameter.env }}
+              extraCommandArgs: ${{ parameter.extraCommandArgs }}
+              parallelism: ${{ parameter.parallelism }}
+              runApply: ${{ parameter.runApply }}
+              runDestroy: ${{ parameter.runDestroy }}
+              keyVaultName: ${{ parameters.keyVaultName }}
+              serviceKeySecretName: ${{ parameters.serviceKeySecretName }}

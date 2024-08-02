@@ -1,0 +1,26 @@
+parameters:
+  - name: keyVaultName
+    displayName: The name of the Azure KeyVault that contains the secrets required to connect to Twingate.
+    type: string
+  - name: serviceKeySecretName
+    displayName: The name of the secret within the Azure KeyVault that contains the service key required to connect to Twingate.
+    type: string
+  - name: serviceConnection
+    displayName: The service connection to use to authenticate to Azure CLI.
+    type: string
+steps:
+  - checkout: self
+    submodules: true
+  - task: AzureCLI@2
+    displayName: Twingate Setup
+    inputs:
+      azureSubscription: ${{ parameters.serviceConnection }}
+      scriptType: "bash"
+      scriptLocation: "inlineScript"
+      inlineScript: |
+        az keyvault secret download --name ${{ parameters.serviceKeySecretName }} --vault-name ${{ parameters.keyVaultName }} --file $(Build.StagingDirectory)/servicekey.json
+        curl https://binaries.twingate.com/client/linux/install.sh | sudo bash
+        sudo twingate setup --headless $(Build.StagingDirectory)/servicekey.json
+        twingate status
+        sudo twingate start
+        twingate status
