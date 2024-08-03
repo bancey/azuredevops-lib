@@ -39,7 +39,7 @@ steps:
   - template: gh-auth.yaml
     parameters:
       serviceConnection: ${{ parameters.serviceConnection }}
-      keyVaultName: ${{ parameters.keyVaultName }}
+      keyVaultName: bancey-vault
       privateKeySecretName: GitHub-Bot-Private-Key
       githubAppIdSecretName: GitHub-Bot-ID
   - script: |
