@@ -1,5 +1,3 @@
-parameters:
-
 steps:
   - script: |
       gh extention install Link-/gh-token
