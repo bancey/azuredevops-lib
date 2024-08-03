@@ -36,6 +36,7 @@ parameters:
     type: boolean
 
 steps:
+  - template: gh-auth.yaml
   - script: |
       curl -L https://raw.githubusercontent.com/warrensbox/terraform-switcher/release/install.sh | bash -s -- -b  ~/.local/bin
       set -x
