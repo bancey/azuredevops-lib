@@ -1,7 +1,33 @@
+parameters:
+  - name: serviceConnection
+    displayName: The service connection to use to authenticate to Azure CLI.
+    type: string
+  - name: keyVaultName
+    displayName: The name of the Azure KeyVault that contains the secrets required to connect to GitHub.
+    type: string
+  - name: privateKeySecretName
+    displayName: The name of the secret within the Azure KeyVault that contains the private key required to authenticate to GitHub.
+    type: string
+  - name: githubAppIdSecretName
+    displayName: The name of the secret within the Azure KeyVault that contains the GitHub App ID.
+    type: string
+
 steps:
+  - task: AzureKeyVault@2
+    inputs:
+      azureSubscription: ${{ parameters.serviceConnection }}
+      KeyVaultName: ${{ parameters.keyVaultName }}
+      SecretsFilter: "${{ parameters.privateKeySecretName},${{ parameters.githubAppIdSecretName }}"
+      RunAsPreJob: false
   - script: |
       GH_TOKEN_VERSION=v2.0.2
       curl -L https://github.com/Link-/gh-token/releases/download/$GH_TOKEN_VERSION/linux-amd64 -o /usr/local/bin/gh-token
       chmod +x /usr/local/bin/gh-token
       gh-token --help
     displayName: Install gh-token
+  - script: |
+      gh-token installations --base64-key $(printf "%s" $PRIVATE_KEY | base64) --app-id $GITHUB_APP_ID
+    displayName: Get GitHub token
+    env:
+      PRIVATE_KEY: $(parameters.privateKeySecretName)
+      GITHUB_APP_ID: $(parameters.githubAppIdSecretName)

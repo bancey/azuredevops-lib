@@ -37,6 +37,11 @@ parameters:
 
 steps:
   - template: gh-auth.yaml
+    parameters:
+      serviceConnection: ${{ parameters.serviceConnection }}
+      keyVaultName: ${{ parameters.keyVaultName }}
+      privateKeySecretName: GitHub-Bot-Private-Key
+      githubAppIdSecretName: GitHub-Bot-ID
   - script: |
       curl -L https://raw.githubusercontent.com/warrensbox/terraform-switcher/release/install.sh | bash -s -- -b  ~/.local/bin
       set -x
