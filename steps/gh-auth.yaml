@@ -17,7 +17,7 @@ steps:
     inputs:
       azureSubscription: ${{ parameters.serviceConnection }}
       KeyVaultName: ${{ parameters.keyVaultName }}
-      SecretsFilter: "${{ parameters.privateKeySecretName},${{ parameters.githubAppIdSecretName }}"
+      SecretsFilter: "${{ parameters.privateKeySecretName }},${{ parameters.githubAppIdSecretName }}"
       RunAsPreJob: false
   - script: |
       GH_TOKEN_VERSION=v2.0.2
