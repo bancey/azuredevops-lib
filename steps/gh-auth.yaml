@@ -26,7 +26,8 @@ steps:
       gh-token installations --help
     displayName: Install gh-token
   - script: |
-      gh-token installations --base64-key $(echo $PRIVATE_KEY | base64) --app-id $GITHUB_APP_ID
+      echo $PRIVATE_KEY > /tmp/private-key.pem
+      gh-token installations --key /tmp/private-key.pem --app-id $GITHUB_APP_ID
     displayName: Get GitHub token
     env:
       PRIVATE_KEY: $(parameters.privateKeySecretName)
