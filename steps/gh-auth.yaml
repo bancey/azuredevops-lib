@@ -23,7 +23,7 @@ steps:
       GH_TOKEN_VERSION=v2.0.2
       curl -L https://github.com/Link-/gh-token/releases/download/$GH_TOKEN_VERSION/linux-amd64 -o /usr/local/bin/gh-token
       chmod +x /usr/local/bin/gh-token
-      gh-token --help
+      gh-token installations --help
     displayName: Install gh-token
   - script: |
       gh-token installations --base64-key $(printf "%s" $PRIVATE_KEY | base64) --app-id $GITHUB_APP_ID
