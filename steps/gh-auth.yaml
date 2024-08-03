@@ -1,5 +1,7 @@
 steps:
   - script: |
-      gh extension install Link-/gh-token
-      gh token
+      GH_TOKEN_VERSION=v2.0.2
+      curl -L https://github.com/Link-/gh-token/releases/download/$GH_TOKEN_VERSION/linux-amd64 -o /usr/local/bin/gh-token
+      chmod +x /usr/local/bin/gh-token
+      gh-token --help
     displayName: Install gh-token
