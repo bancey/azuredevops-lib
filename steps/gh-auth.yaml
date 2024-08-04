@@ -20,13 +20,21 @@ parameters:
     default: succeeded()
 
 steps:
+  - task: AzureCLI@2
+    displayName: Download GitHub Bot Private Key
+    inputs:
+      azureSubscription: ${{ parameters.serviceConnection }}
+      scriptType: "bash"
+      addSpnToEnvironment: true
+      scriptLocation: "inlineScript"
+      inlineScript: az keyvault secret download --name ${{ parameters.privateKeySecretName }} --vault-name ${{ parameters.keyVaultName }} --file $(System.DefaultWorkingDirectory)/private-key.pem
   - task: AzureKeyVault@2
     displayName: Get GitHub secrets from Azure KeyVault
     condition: ${{ parameters.condition }}
     inputs:
       azureSubscription: ${{ parameters.serviceConnection }}
       KeyVaultName: ${{ parameters.keyVaultName }}
-      SecretsFilter: "${{ parameters.privateKeySecretName }},${{ parameters.githubAppIdSecretName }},${{ parameters.githubInstallationIdSecretName}}"
+      SecretsFilter: "${{ parameters.githubAppIdSecretName }},${{ parameters.githubInstallationIdSecretName}}"
       RunAsPreJob: false
   - script: |
       GH_TOKEN_VERSION=v2.0.2
@@ -38,13 +46,10 @@ steps:
   - script: |
       echo $GITHUB_APP_ID
       echo $GITHUB_APP_INSTALLATION_ID
-      echo $PRIVATE_KEY
-      PRIVATE_KEY_BASE64=$(echo $PRIVATE_KEY | base64)
-      GITHUB_TOKEN=$(gh-token generate --app-id $GITHUB_APP_ID --installation-id $GITHUB_APP_INSTALLATION_ID --duration 5 --token-only --base64-key $PRIVATE_KEY_BASE64)
+      GITHUB_TOKEN=$(gh-token generate --app-id $GITHUB_APP_ID --installation-id $GITHUB_APP_INSTALLATION_ID --duration 5 --token-only --key $(System.DefaultWorkingDirectory)/private-key.pem)
       echo "##vso[task.setvariable variable=GitHubToken;issecret=true]$GITHUB_TOKEN"
     displayName: Get GitHub token
     condition: ${{ parameters.condition }}
     env:
       GITHUB_APP_ID: $(${{ parameters.githubAppIdSecretName }})
       GITHUB_APP_INSTALLATION_ID: $(${{ parameters.githubInstallationIdSecretName }})
-      PRIVATE_KEY: $(${{ parameters.privateKeySecretName }})
