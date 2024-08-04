@@ -36,11 +36,11 @@ steps:
     displayName: Install gh-token
     condition: ${{ parameters.condition }}
   - script: |
-      GITHUB_TOKEN=$(gh-token generate --base64-key $(echo $PRIVATE_KEY | base64) --app-id $GITHUB_APP_ID --installation-id $GITHUB_APP_INSTALLATION_ID --duration 5 --token-only)
+      GITHUB_TOKEN=$(gh-token generate --app-id $GITHUB_APP_ID --installation-id $GITHUB_APP_INSTALLATION_ID --duration 5 --token-only --base64-key $(echo $PRIVATE_KEY | base64))
       echo "##vso[task.setvariable variable=GitHubToken;issecret=true]$GITHUB_TOKEN"
     displayName: Get GitHub token
     condition: ${{ parameters.condition }}
     env:
-      GITHUB_APP_ID: $(${{ parameters.githubAppIdSecretName}})
+      GITHUB_APP_ID: $(${{ parameters.githubAppIdSecretName }})
       GITHUB_APP_INSTALLATION_ID: $(${{ parameters.githubInstallationIdSecretName }})
-      PRIVATE_KEY: $(${{ parameters.privateKeySecretName}})
+      PRIVATE_KEY: $(${{ parameters.privateKeySecretName }})
