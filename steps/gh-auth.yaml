@@ -14,10 +14,15 @@ parameters:
   - name: githubInstallationIdSecretName
     displayName: The name of the secret within the Azure KeyVault that contains the GitHub App Installation ID.
     type: string
+  - name: condition
+    displayName: The condition to evaluate to determine if the step should run.
+    type: string
+    default: succeeded()
 
 steps:
   - task: AzureKeyVault@2
     displayName: Get GitHub secrets from Azure KeyVault
+    condition: ${{ parameters.condition }}
     inputs:
       azureSubscription: ${{ parameters.serviceConnection }}
       KeyVaultName: ${{ parameters.keyVaultName }}
@@ -29,10 +34,12 @@ steps:
       chmod +x /usr/local/bin/gh-token
       gh-token installations --help
     displayName: Install gh-token
+    condition: ${{ parameters.condition }}
   - script: |
       GITHUB_TOKEN=$(gh-token generate --base64-key $(echo $PRIVATE_KEY | base64) --app-id $GITHUB_APP_ID --installation-id $GITHUB_APP_INSTALLATION_ID --duration 5 --token-only)
       echo "##vso[task.setvariable variable=GitHubToken;issecret=true]$GITHUB_TOKEN"
     displayName: Get GitHub token
+    condition: ${{ parameters.condition }}
     env:
       GITHUB_APP_ID: $(${{ parameters.githubAppIdSecretName}})
       GITHUB_APP_INSTALLATION_ID: $(${{ parameters.githubInstallationIdSecretName }})
