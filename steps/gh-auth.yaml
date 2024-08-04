@@ -11,14 +11,17 @@ parameters:
   - name: githubAppIdSecretName
     displayName: The name of the secret within the Azure KeyVault that contains the GitHub App ID.
     type: string
+  - name: githubInstallationIdSecretName
+    displayName: The name of the secret within the Azure KeyVault that contains the GitHub App Installation ID.
+    type: string
 
 steps:
   - task: AzureKeyVault@2
-    displayName: Get GitHub App IDfrom Azure KeyVault
+    displayName: Get GitHub secrets from Azure KeyVault
     inputs:
       azureSubscription: ${{ parameters.serviceConnection }}
       KeyVaultName: ${{ parameters.keyVaultName }}
-      SecretsFilter: "${{ parameters.privateKeySecretName }},${{ parameters.githubAppIdSecretName }}"
+      SecretsFilter: "${{ parameters.privateKeySecretName }},${{ parameters.githubAppIdSecretName }},${{ parameters.githubInstallationIdSecretName}}"
       RunAsPreJob: false
   - script: |
       GH_TOKEN_VERSION=v2.0.2
@@ -27,8 +30,10 @@ steps:
       gh-token installations --help
     displayName: Install gh-token
   - script: |
-      gh-token installations --base64-key $(echo $PRIVATE_KEY | base64) --app-id $GITHUB_APP_ID
+      GITHUB_TOKEN=$(gh-token generate --base64-key $(echo $PRIVATE_KEY | base64) --app-id $GITHUB_APP_ID --installation-id $GITHUB_APP_INSTALLATION_ID --duration 5 --token-only)
+      echo "##vso[task.setvariable variable=GitHubToken;issecret=true]$GITHUB_TOKEN"
     displayName: Get GitHub token
     env:
       GITHUB_APP_ID: $(${{ parameters.githubAppIdSecretName}})
+      GITHUB_APP_INSTALLATION_ID: $(${{ parameters.githubInstallationIdSecretName }})
       PRIVATE_KEY: $(${{ parameters.privateKeySecretName}})
