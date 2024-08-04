@@ -34,7 +34,7 @@ steps:
       gh-token installations --help
     displayName: Install gh-token
   - script: |
-      gh-token installations --key $(System.DefaultWorkingDirectory)/private-key.pem --app-id $GITHUB_APP_ID
+      gh-token installations --key $(System.DefaultWorkingDirectory)/private-key.pem --app-id 960619
     displayName: Get GitHub token
     env:
       GITHUB_APP_ID: $(parameters.githubAppIdSecretName)
