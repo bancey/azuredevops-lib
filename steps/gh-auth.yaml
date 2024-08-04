@@ -13,11 +13,19 @@ parameters:
     type: string
 
 steps:
+  - task: AzureCLI@2
+    displayName: Download GitHub App Private Key
+    inputs:
+      azureSubscription: ${{ parameters.serviceConnection }}
+      scriptType: "bash"
+      scriptLocation: "inlineScript"
+      inlineScript: az keyvault secret download --name ${{ parameters.privateKeySecretName }} --vault-name ${{ parameters.keyVaultName }} --file /tmp/private-key.pem
   - task: AzureKeyVault@2
+    displayName: Get GitHub App IDfrom Azure KeyVault
     inputs:
       azureSubscription: ${{ parameters.serviceConnection }}
       KeyVaultName: ${{ parameters.keyVaultName }}
-      SecretsFilter: "${{ parameters.privateKeySecretName }},${{ parameters.githubAppIdSecretName }}"
+      SecretsFilter: "${{ parameters.githubAppIdSecretName }}"
       RunAsPreJob: false
   - script: |
       GH_TOKEN_VERSION=v2.0.2
@@ -26,9 +34,7 @@ steps:
       gh-token installations --help
     displayName: Install gh-token
   - script: |
-      echo $PRIVATE_KEY > /tmp/private-key.pem
       gh-token installations --key /tmp/private-key.pem --app-id $GITHUB_APP_ID
     displayName: Get GitHub token
     env:
-      PRIVATE_KEY: $(parameters.privateKeySecretName)
       GITHUB_APP_ID: $(parameters.githubAppIdSecretName)
