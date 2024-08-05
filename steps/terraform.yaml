@@ -125,7 +125,7 @@ steps:
       tfcmt --owner bancey \
         --repo $(Build.Repository.Name) \
         --pr $(System.PullRequest.PullRequestNumber) \
-        --patch -- \
+        --patch true -- \
         terraform show $(System.StageName).tfplan
     displayName: Publish Terraform plan to GitHub
     condition: and(succeeded(), ne(variables['System.PullRequest.PullRequestNumber'], ''))
