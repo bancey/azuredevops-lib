@@ -124,8 +124,7 @@ steps:
   - script: |
       OWNER=$(echo $(Build.Repository.Name) | cut -d '/' -f1)
       REPOSITORY_NAME=$(echo $(Build.Repository.Name) | cut -d '/' -f2)
-      echo "tfcmt --owner $OWNER --repo $REPOSITORY_NAME --pr $(System.PullRequest.PullRequestNumber) plan -patch -- terraform show $(System.StageName).tfplan"
-      tfcmt --owner $OWNER --repo $REPOSITORY_NAME --pr $(System.PullRequest.PullRequestNumber) plan -patch -- terraform show $(System.StageName).tfplan
+      tfcmt --owner $OWNER --repo $REPOSITORY_NAME --pr $(System.PullRequest.PullRequestNumber) --var target:$(System.StageName) plan -patch -- terraform show $(System.StageName).tfplan
     displayName: Publish Terraform plan to GitHub
     condition: and(succeeded(), ne(variables['System.PullRequest.PullRequestNumber'], ''))
     workingDirectory: ${{ parameters.workingDirectory }}
