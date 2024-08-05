@@ -34,6 +34,9 @@ parameters:
     type: boolean
   - name: runDestroy
     type: boolean
+  - name: publishPlan
+    type: boolean
+    default: true
 
 steps:
   - template: gh-auth.yaml
@@ -44,18 +47,19 @@ steps:
       githubAppIdSecretName: GitHub-Bot-ID
       githubInstallationIdSecretName: GitHub-Bot-Installation-ID
       condition: and(succeeded(), ne(variables['System.PullRequest.PullRequestNumber'], ''))
-  - script: |    
-      TFCMT_VERSION=v4.12.0
-      curl -fL -o tfcmt.tar.gz https://github.com/suzuki-shunsuke/tfcmt/releases/download/$TFCMT_VERSION/tfcmt_linux_amd64.tar.gz
+  - ${{ if eq(parameters.publishPlan, true) }}:
+    - script: |    
+        TFCMT_VERSION=v4.12.0
+        curl -fL -o tfcmt.tar.gz https://github.com/suzuki-shunsuke/tfcmt/releases/download/$TFCMT_VERSION/tfcmt_linux_amd64.tar.gz
 
-      if command -v sudo &> /dev/null
-      then
-        sudo tar -C /usr/bin -xzf ./tfcmt.tar.gz tfcmt
-      else
-        tar -C /usr/bin -xzf ./tfcmt.tar.gz tfcmt
-      fi
-    displayName: Install tfcmt
-    condition: and(succeeded(), ne(variables['System.PullRequest.PullRequestNumber'], ''))
+        if command -v sudo &> /dev/null
+        then
+          sudo tar -C /usr/bin -xzf ./tfcmt.tar.gz tfcmt
+        else
+          tar -C /usr/bin -xzf ./tfcmt.tar.gz tfcmt
+        fi
+      displayName: Install tfcmt
+      condition: and(succeeded(), ne(variables['System.PullRequest.PullRequestNumber'], ''))
   - script: |
       curl -L https://raw.githubusercontent.com/warrensbox/terraform-switcher/release/install.sh | bash -s -- -b  ~/.local/bin
       set -x
@@ -121,12 +125,13 @@ steps:
         workingDirectory: ${{ parameters.workingDirectory }}
         environmentServiceName: ${{ parameters.serviceConnection }}
       env: ${{ parameters.env }}
-  - script: |
-      OWNER=$(echo $(Build.Repository.Name) | cut -d '/' -f1)
-      REPOSITORY_NAME=$(echo $(Build.Repository.Name) | cut -d '/' -f2)
-      tfcmt --owner $OWNER --repo $REPOSITORY_NAME --pr $(System.PullRequest.PullRequestNumber) --var target:$(System.StageName) plan -patch -- terraform show $(System.StageName).tfplan
-    displayName: Publish Terraform plan to GitHub
-    condition: and(succeeded(), ne(variables['System.PullRequest.PullRequestNumber'], ''))
-    workingDirectory: ${{ parameters.workingDirectory }}
-    env:
-      GITHUB_TOKEN: $(GitHubToken)
+  - ${{ if eq(parameters.publishPlan, true) }}:
+    - script: |
+        OWNER=$(echo $(Build.Repository.Name) | cut -d '/' -f1)
+        REPOSITORY_NAME=$(echo $(Build.Repository.Name) | cut -d '/' -f2)
+        tfcmt --owner $OWNER --repo $REPOSITORY_NAME --pr $(System.PullRequest.PullRequestNumber) --var target:$(System.StageName) plan -patch -- terraform show $(System.StageName).tfplan
+      displayName: Publish Terraform plan to GitHub
+      condition: and(succeeded(), ne(variables['System.PullRequest.PullRequestNumber'], ''))
+      workingDirectory: ${{ parameters.workingDirectory }}
+      env:
+        GITHUB_TOKEN: $(GitHubToken)
