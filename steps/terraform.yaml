@@ -122,7 +122,7 @@ steps:
         environmentServiceName: ${{ parameters.serviceConnection }}
       env: ${{ parameters.env }}
   - script: |
-      tfcmt --owner bancey \
+      tfcmt plan --owner bancey \
         --repo $(Build.Repository.Name) \
         --pr $(System.PullRequest.PullRequestNumber) \
         --patch true -- \
