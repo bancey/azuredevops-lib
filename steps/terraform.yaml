@@ -122,9 +122,10 @@ steps:
         environmentServiceName: ${{ parameters.serviceConnection }}
       env: ${{ parameters.env }}
   - script: |
+      OWNER=$(echo $(Build.Repository.Name) | cut -d '/' -f1)
       REPOSITORY_NAME=$(echo $(Build.Repository.Name) | cut -d '/' -f2)
-      echo "tfcmt plan --owner bancey --repo $REPOSITORY_NAME --pr $(System.PullRequest.PullRequestNumber) --patch true -- terraform show $(System.StageName).tfplan"
-      tfcmt plan --owner bancey --repo $REPOSITORY_NAME --pr $(System.PullRequest.PullRequestNumber) --patch true -- terraform show $(System.StageName).tfplan
+      echo "tfcmt plan --owner $OWNER --repo $REPOSITORY_NAME --pr $(System.PullRequest.PullRequestNumber) --patch true -- terraform show $(System.StageName).tfplan"
+      tfcmt plan --owner $OWNER --repo $REPOSITORY_NAME --pr $(System.PullRequest.PullRequestNumber) --patch true -- terraform show $(System.StageName).tfplan
     displayName: Publish Terraform plan to GitHub
     condition: and(succeeded(), ne(variables['System.PullRequest.PullRequestNumber'], ''))
     env:
