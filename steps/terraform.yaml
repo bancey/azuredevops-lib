@@ -128,5 +128,6 @@ steps:
       tfcmt --owner $OWNER --repo $REPOSITORY_NAME --pr $(System.PullRequest.PullRequestNumber) plan -patch -- terraform show $(System.StageName).tfplan
     displayName: Publish Terraform plan to GitHub
     condition: and(succeeded(), ne(variables['System.PullRequest.PullRequestNumber'], ''))
+    workingDirectory: ${{ parameters.workingDirectory }}
     env:
       GITHUB_TOKEN: $(GitHubToken)
