@@ -46,7 +46,7 @@ steps:
   - script: |
       echo $GITHUB_APP_ID
       echo $GITHUB_APP_INSTALLATION_ID
-      GITHUB_TOKEN=$(gh-token generate --app-id $GITHUB_APP_ID --installation-id $GITHUB_APP_INSTALLATION_ID --duration 5 --token-only --key $(System.DefaultWorkingDirectory)/private-key.pem)
+      GITHUB_TOKEN=$(gh-token generate --app-id $GITHUB_APP_ID --duration 5 --token-only --key $(System.DefaultWorkingDirectory)/private-key.pem)
       echo "##vso[task.setvariable variable=GitHubToken;issecret=true]$GITHUB_TOKEN"
     displayName: Get GitHub token
     condition: ${{ parameters.condition }}
