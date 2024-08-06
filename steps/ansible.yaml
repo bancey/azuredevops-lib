@@ -44,7 +44,7 @@ steps:
       itemPattern: hosts.yaml
   - ${{ if and(ne(parameters.playbook, ''), ne(variables['Build.SourceBranch'], 'refs/heads/master')) }}:
     - task: AzureCLI@2
-      displayName: Check/Run Ansible Playbook
+      displayName: Check Ansible Playbook
       inputs:
         azureSubscription: ${{ parameters.serviceConnection }}
         scriptType: "bash"
