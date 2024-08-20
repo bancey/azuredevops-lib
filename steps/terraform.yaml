@@ -97,9 +97,9 @@ steps:
       environmentServiceName: ${{ parameters.serviceConnection }}
       publishPlanResults: $(System.StageDisplayName)
       ${{ if ne(parameters.extraCommandArgs, '') }}:
-        commandOptions: '-var-file ${{ parameters.variableFilePath }} -compact-warnings -out=$(System.StageName).tfplan ${{ parameters.extraCommandArgs }}'
+        commandOptions: '-var-file ${{ parameters.variableFilePath }} -lock=false -compact-warnings -out=$(System.StageName).tfplan ${{ parameters.extraCommandArgs }}'
       ${{ else }}:
-        commandOptions: '-var-file ${{ parameters.variableFilePath }} -compact-warnings -out=$(System.StageName).tfplan'
+        commandOptions: '-var-file ${{ parameters.variableFilePath }} -lock=false -compact-warnings -out=$(System.StageName).tfplan'
     env: ${{ parameters.env }}
   - ${{ if eq(parameters.runApply, true) }}:
     - task: TerraformCLI@0
