@@ -9,7 +9,7 @@ parameters:
     type: string
   - name: extraVars
     type: string
-    default: ''
+    default: ""
   - name: configFiles
     type: object
     default: []
@@ -28,24 +28,24 @@ steps:
     displayName: Download Packer Private Key
     inputs:
       azureSubscription: ${{ parameters.serviceConnection }}
-      scriptType: 'bash'
-      scriptLocation: 'inlineScript'
+      scriptType: "bash"
+      scriptLocation: "inlineScript"
       inlineScript: |
         az keyvault secret download --name Packer-Private-Key --vault-name ${{ parameters.keyVaultName }} --file $(System.DefaultWorkingDirectory)/packer_private_key
   - ${{ each file in parameters.configFiles }}:
-    - task: replacetokens@3
-      displayName: "Populate files with values from KeyVault"
-      inputs:
-        targetFiles: ${{ file }}
-        encoding: auto
-        writeBOM: true
-        actionOnMissing: fail
-        keepToken: true
-        tokenPrefix: $(
-        tokenSuffix: )
-        useLegacyPattern: false
-        enableTransforms: false
-        enableTelemetry: false
+      - task: replacetokens@3
+        displayName: "Populate files with values from KeyVault"
+        inputs:
+          targetFiles: ${{ file }}
+          encoding: auto
+          writeBOM: true
+          actionOnMissing: fail
+          keepToken: true
+          tokenPrefix: $(
+          tokenSuffix: )
+          useLegacyPattern: false
+          enableTransforms: false
+          enableTelemetry: false
   - task: CmdLine@2
     displayName: Run Packer Validate
     inputs:
@@ -60,17 +60,17 @@ steps:
           packer init ${{ parameters.packerConfigFile }}
           packer validate -var-file="${{ parameters.packerVarsFile }}" ${{ parameters.extraVars }} ${{ parameters.packerConfigFile }}
   - ${{ if eq(true, parameters.runBuild) }}:
-    - task: CmdLine@2
-      displayName: Run Packer Build
-      condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
-      inputs:
-        ${{ if eq(parameters.extraVars, '') }}:
-          script: |
-            packer -version
-            packer init ${{ parameters.packerConfigFile }}
-            packer build -var-file="${{ parameters.packerVarsFile }}" ${{ parameters.packerConfigFile }}
-        ${{ else }}:
-          script: |
-            packer -version
-            packer init ${{ parameters.packerConfigFile }}
-            packer build -debug -var-file="${{ parameters.packerVarsFile }}" ${{ parameters.extraVars }} ${{ parameters.packerConfigFile }}
+      - task: CmdLine@2
+        displayName: Run Packer Build
+        condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+        inputs:
+          ${{ if eq(parameters.extraVars, '') }}:
+            script: |
+              packer -version
+              packer init ${{ parameters.packerConfigFile }}
+              packer build -var-file="${{ parameters.packerVarsFile }}" ${{ parameters.packerConfigFile }}
+          ${{ else }}:
+            script: |
+              packer -version
+              packer init ${{ parameters.packerConfigFile }}
+              packer build -debug -var-file="${{ parameters.packerVarsFile }}" ${{ parameters.extraVars }} ${{ parameters.packerConfigFile }}
