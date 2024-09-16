@@ -36,12 +36,6 @@ steps:
         az keyvault secret download --name ${{ parameters.privateKeySecretName }} --vault-name ${{ parameters.keyVaultName }} --file $(System.DefaultWorkingDirectory)/ansible/id_rsa
         chmod 600 $(System.DefaultWorkingDirectory)/ansible/id_rsa
         ls -la $(System.DefaultWorkingDirectory)/ansible
-  - task: DownloadPipelineArtifact@2
-    displayName: Download Ansible Inventory
-    inputs:
-      artifactName: "ansible"
-      targetPath: $(System.DefaultWorkingDirectory)/ansible
-      itemPattern: hosts.yaml
   - ? ${{ if and(ne(parameters.playbook, ''), ne(variables['Build.SourceBranch'], 'refs/heads/main')) }}
     : - task: AzureCLI@2
         displayName: Check Ansible Playbook
