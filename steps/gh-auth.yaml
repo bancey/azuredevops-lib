@@ -22,7 +22,6 @@ parameters:
 steps:
   - task: AzureCLI@2
     displayName: Download GitHub Bot Private Key
-    condition: ${{ parameters.condition }}
     inputs:
       azureSubscription: ${{ parameters.serviceConnection }}
       scriptType: "bash"
