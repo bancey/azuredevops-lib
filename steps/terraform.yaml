@@ -48,18 +48,18 @@ steps:
       githubInstallationIdSecretName: GitHub-Bot-Installation-ID
       condition: and(succeeded(), ne(variables['System.PullRequest.PullRequestNumber'], ''))
   - ${{ if eq(parameters.publishPlan, true) }}:
-    - script: |    
-        TFCMT_VERSION=v4.12.0
-        curl -fL -o tfcmt.tar.gz https://github.com/suzuki-shunsuke/tfcmt/releases/download/$TFCMT_VERSION/tfcmt_linux_amd64.tar.gz
+      - script: |
+          TFCMT_VERSION=v4.12.0
+          curl -fL -o tfcmt.tar.gz https://github.com/suzuki-shunsuke/tfcmt/releases/download/$TFCMT_VERSION/tfcmt_linux_amd64.tar.gz
 
-        if command -v sudo &> /dev/null
-        then
-          sudo tar -C /usr/bin -xzf ./tfcmt.tar.gz tfcmt
-        else
-          tar -C /usr/bin -xzf ./tfcmt.tar.gz tfcmt
-        fi
-      displayName: Install tfcmt
-      condition: and(succeeded(), ne(variables['System.PullRequest.PullRequestNumber'], ''))
+          if command -v sudo &> /dev/null
+          then
+            sudo tar -C /usr/bin -xzf ./tfcmt.tar.gz tfcmt
+          else
+            tar -C /usr/bin -xzf ./tfcmt.tar.gz tfcmt
+          fi
+        displayName: Install tfcmt
+        condition: and(succeeded(), ne(variables['System.PullRequest.PullRequestNumber'], ''))
   - script: |
       curl -L https://raw.githubusercontent.com/warrensbox/terraform-switcher/release/install.sh | bash -s -- -b  ~/.local/bin
       set -x
@@ -68,12 +68,12 @@ steps:
       tfswitch -b ~/.local/bin/terraform
     displayName: Install tfswitch
     workingDirectory: ${{ parameters.workingDirectory }}
-  - task: TerraformCLI@0
+  - task: TerraformCLI@1
     displayName: Terraform initialize
     inputs:
       command: init
       workingDirectory: ${{ parameters.workingDirectory }}
-      commandOptions: '-upgrade -reconfigure'
+      commandOptions: "-upgrade -reconfigure"
       backendType: azurerm
       ensurebackend: true
       backendServiceArm: ${{ parameters.serviceConnection }}
@@ -83,12 +83,12 @@ steps:
       backendAzureRmStorageAccountSku: ${{ parameters.backendStorageAccountSku }}
       backendAzureRmContainerName: ${{ parameters.backendContainer }}
       backendAzureRmKey: ${{ parameters.azureRmKey }}
-  - task: TerraformCLI@0
+  - task: TerraformCLI@1
     displayName: Terraform validate
     inputs:
       command: validate
       workingDirectory: ${{ parameters.workingDirectory }}
-  - task: TerraformCLI@0
+  - task: TerraformCLI@1
     displayName: Terraform plan
     inputs:
       command: plan
@@ -97,41 +97,41 @@ steps:
       environmentServiceName: ${{ parameters.serviceConnection }}
       publishPlanResults: $(System.StageDisplayName)
       ${{ if ne(parameters.extraCommandArgs, '') }}:
-        commandOptions: '-var-file ${{ parameters.variableFilePath }} -lock=false -compact-warnings -out=$(System.StageName).tfplan ${{ parameters.extraCommandArgs }}'
+        commandOptions: "-var-file ${{ parameters.variableFilePath }} -lock=false -compact-warnings -out=$(System.StageName).tfplan ${{ parameters.extraCommandArgs }}"
       ${{ else }}:
-        commandOptions: '-var-file ${{ parameters.variableFilePath }} -lock=false -compact-warnings -out=$(System.StageName).tfplan'
+        commandOptions: "-var-file ${{ parameters.variableFilePath }} -lock=false -compact-warnings -out=$(System.StageName).tfplan"
     env: ${{ parameters.env }}
   - ${{ if eq(parameters.runApply, true) }}:
-    - task: TerraformCLI@0
-      displayName: Terraform apply
-      inputs:
-        command: apply
-        ${{ if ne(parameters.parallelism, -1) }}:
-          commandOptions: '-parallelism=${{ parameters.parallelism }} -compact-warnings $(System.StageName).tfplan'
-        ${{ else }}:
-          commandOptions: '-compact-warnings $(System.StageName).tfplan'
-        workingDirectory: ${{ parameters.workingDirectory }}
-        environmentServiceName: ${{ parameters.serviceConnection }}
-      env: ${{ parameters.env }}
+      - task: TerraformCLI@1
+        displayName: Terraform apply
+        inputs:
+          command: apply
+          ${{ if ne(parameters.parallelism, -1) }}:
+            commandOptions: "-parallelism=${{ parameters.parallelism }} -compact-warnings $(System.StageName).tfplan"
+          ${{ else }}:
+            commandOptions: "-compact-warnings $(System.StageName).tfplan"
+          workingDirectory: ${{ parameters.workingDirectory }}
+          environmentServiceName: ${{ parameters.serviceConnection }}
+        env: ${{ parameters.env }}
   - ${{ if eq(parameters.runDestroy, true) }}:
-    - task: TerraformCLI@0
-      displayName: Terraform destroy
-      inputs:
-        command: destroy
-        ${{ if ne(parameters.parallelism, -1) }}:
-          commandOptions: -parallelism=${{ parameters.parallelism }} -var-file ${{ parameters.variableFilePath }}
-        ${{ else }}:
-          commandOptions: -var-file ${{ parameters.variableFilePath }}
-        workingDirectory: ${{ parameters.workingDirectory }}
-        environmentServiceName: ${{ parameters.serviceConnection }}
-      env: ${{ parameters.env }}
+      - task: TerraformCLI@1
+        displayName: Terraform destroy
+        inputs:
+          command: destroy
+          ${{ if ne(parameters.parallelism, -1) }}:
+            commandOptions: -parallelism=${{ parameters.parallelism }} -var-file ${{ parameters.variableFilePath }}
+          ${{ else }}:
+            commandOptions: -var-file ${{ parameters.variableFilePath }}
+          workingDirectory: ${{ parameters.workingDirectory }}
+          environmentServiceName: ${{ parameters.serviceConnection }}
+        env: ${{ parameters.env }}
   - ${{ if eq(parameters.publishPlan, true) }}:
-    - script: |
-        OWNER=$(echo $(Build.Repository.Name) | cut -d '/' -f1)
-        REPOSITORY_NAME=$(echo $(Build.Repository.Name) | cut -d '/' -f2)
-        tfcmt --owner $OWNER --repo $REPOSITORY_NAME --pr $(System.PullRequest.PullRequestNumber) --var target:$(System.StageName) plan -patch -- terraform show $(System.StageName).tfplan
-      displayName: Publish Terraform plan to GitHub
-      condition: and(succeeded(), ne(variables['System.PullRequest.PullRequestNumber'], ''))
-      workingDirectory: ${{ parameters.workingDirectory }}
-      env:
-        GITHUB_TOKEN: $(GitHubToken)
+      - script: |
+          OWNER=$(echo $(Build.Repository.Name) | cut -d '/' -f1)
+          REPOSITORY_NAME=$(echo $(Build.Repository.Name) | cut -d '/' -f2)
+          tfcmt --owner $OWNER --repo $REPOSITORY_NAME --pr $(System.PullRequest.PullRequestNumber) --var target:$(System.StageName) plan -patch -- terraform show $(System.StageName).tfplan
+        displayName: Publish Terraform plan to GitHub
+        condition: and(succeeded(), ne(variables['System.PullRequest.PullRequestNumber'], ''))
+        workingDirectory: ${{ parameters.workingDirectory }}
+        env:
+          GITHUB_TOKEN: $(GitHubToken)
