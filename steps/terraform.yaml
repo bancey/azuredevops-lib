@@ -68,7 +68,7 @@ steps:
       tfswitch -b ~/.local/bin/terraform
     displayName: Install tfswitch
     workingDirectory: ${{ parameters.workingDirectory }}
-  - task: TerraformCLI@1
+  - task: TerraformCLI@2
     displayName: Terraform initialize
     inputs:
       command: init
@@ -83,12 +83,12 @@ steps:
       backendAzureRmStorageAccountSku: ${{ parameters.backendStorageAccountSku }}
       backendAzureRmContainerName: ${{ parameters.backendContainer }}
       backendAzureRmKey: ${{ parameters.azureRmKey }}
-  - task: TerraformCLI@1
+  - task: TerraformCLI@2
     displayName: Terraform validate
     inputs:
       command: validate
       workingDirectory: ${{ parameters.workingDirectory }}
-  - task: TerraformCLI@1
+  - task: TerraformCLI@2
     displayName: Terraform plan
     inputs:
       command: plan
@@ -102,7 +102,7 @@ steps:
         commandOptions: "-var-file ${{ parameters.variableFilePath }} -lock=false -compact-warnings -out=$(System.StageName).tfplan"
     env: ${{ parameters.env }}
   - ${{ if eq(parameters.runApply, true) }}:
-      - task: TerraformCLI@1
+      - task: TerraformCLI@2
         displayName: Terraform apply
         inputs:
           command: apply
@@ -114,7 +114,7 @@ steps:
           environmentServiceName: ${{ parameters.serviceConnection }}
         env: ${{ parameters.env }}
   - ${{ if eq(parameters.runDestroy, true) }}:
-      - task: TerraformCLI@1
+      - task: TerraformCLI@2
         displayName: Terraform destroy
         inputs:
           command: destroy
