@@ -75,7 +75,6 @@ steps:
       workingDirectory: ${{ parameters.workingDirectory }}
       commandOptions: "-upgrade -reconfigure"
       backendType: azurerm
-      ensurebackend: true
       backendServiceArm: ${{ parameters.serviceConnection }}
       backendAzureRmResourceGroupName: ${{ parameters.backendResourceGroupName }}
       backendAzureRmResourceGroupLocation: ${{ parameters.backendResourceGroupLocation }}
