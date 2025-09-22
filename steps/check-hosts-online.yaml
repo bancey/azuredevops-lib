@@ -4,7 +4,7 @@ parameters:
     type: object
 
 steps:
-  - script: sudo apt install ssh-tools
+  - script: sudo apt-get install ssh-tools
     displayName: 'Install ssh-tools'
   - ${{ each host in parameters.hosts }}:
     - template: check-host-online.yaml

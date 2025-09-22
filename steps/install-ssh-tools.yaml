@@ -1,0 +1,20 @@
+---
+parameters:
+  - name: includeOpenSSH
+    type: boolean
+    default: true
+  - name: includeSSHPass
+    type: boolean
+    default: false
+
+steps:
+  - template: install-tools.yaml
+    parameters:
+      cacheKeyPrefix: "ssh-tools"
+      tools:
+        ${{ if parameters.includeOpenSSH }}:
+          - name: openssh-client
+            aptPackage: openssh-client
+        ${{ if parameters.includeSSHPass }}:
+          - name: sshpass
+            aptPackage: sshpass

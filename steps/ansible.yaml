@@ -16,6 +16,12 @@ parameters:
     default: {}
 
 steps:
+  # Install SSH tools with caching
+  - template: install-ssh-tools.yaml
+    parameters:
+      includeOpenSSH: true
+      includeSSHPass: false
+
   - ${{ each secret in parameters.secrets }}:
       - task: AzureCLI@2
         displayName: Download ${{ secret }}
