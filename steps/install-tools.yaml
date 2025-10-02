@@ -21,59 +21,61 @@ steps:
       path: $(Pipeline.Workspace)/.tools
       cacheHitVar: TOOLS_CACHE_RESTORED
 
-  # Install tools if not cached
+  # Setup tools directory
   - script: |
       set -e
       mkdir -p $(Pipeline.Workspace)/.tools/bin
       cd $(Pipeline.Workspace)/.tools
-
-      # Add tools directory to PATH
       echo "##vso[task.prependpath]$(Pipeline.Workspace)/.tools/bin"
+    displayName: Setup Tools Directory
 
-      # Install each tool if not cached
-      if [ "$(TOOLS_CACHE_RESTORED)" != "true" ]; then
-        echo "Installing tools..."
+  # Install each tool as a separate step
+  - ${{ each tool in parameters.tools }}:
+    - script: |
+        set -e
+        cd $(Pipeline.Workspace)/.tools
 
-        # Install tools as specified in parameters
-        ${{ each tool in parameters.tools }}:
+        if [ "$(TOOLS_CACHE_RESTORED)" != "true" ]; then
           echo "Installing ${{ tool.name }}..."
 
           ${{ if tool.aptPackage }}:
-            # Install via apt
-            sudo apt update && sudo apt install -y ${{ tool.aptPackage }}
+          # Install via apt
+          sudo apt update && sudo apt install -y ${{ tool.aptPackage }}
 
           ${{ elseif tool.downloadUrl }}:
-            # Download and install
-            ${{ if tool.installScript }}:
-              # Use custom install script
-              curl -fL ${{ tool.downloadUrl }} | ${{ tool.installScript }}
+          ${{ if tool.installScript }}:
+          # Use custom install script
+          curl -fL ${{ tool.downloadUrl }} | ${{ tool.installScript }}
 
-            ${{ elseif tool.directBinary }}:
-              # Download direct binary
-              curl -fL -o bin/${{ tool.name }} ${{ tool.downloadUrl }}
-              chmod +x bin/${{ tool.name }}
+          ${{ elseif tool.directBinary }}:
+          # Download direct binary
+          curl -fL -o bin/${{ tool.name }} ${{ tool.downloadUrl }}
+          chmod +x bin/${{ tool.name }}
 
-            ${{ else }}:
-              # Download and extract
-              curl -fL -o ${{ tool.name }}.tar.gz ${{ tool.downloadUrl }}
-              tar -xzf ${{ tool.name }}.tar.gz
+          ${{ else }}:
+          # Download and extract
+          curl -fL -o ${{ tool.name }}.tar.gz ${{ tool.downloadUrl }}
+          tar -xzf ${{ tool.name }}.tar.gz
 
-              # Find the binary and move it
-              find . -name "${{ tool.name }}" -type f -executable | \
-                head -1 | xargs -I {} mv {} bin/
+          # Find the binary and move it
+          find . -name "${{ tool.name }}" -type f -executable | \
+            head -1 | xargs -I {} mv {} bin/
 
-              # Clean up
-              rm -f ${{ tool.name }}.tar.gz
+          # Clean up
+          rm -f ${{ tool.name }}.tar.gz
+          ${{ end }}
+          ${{ end }}
 
-        echo "Tools installation completed"
-      else
-        echo "Tools restored from cache"
-      fi
+          echo "${{ tool.name }} installation completed"
+        else
+          echo "${{ tool.name }} restored from cache"
+        fi
 
-      # Run post-install commands for all tools
-      ${{ each tool in parameters.tools }}:
+        # Run post-install commands if they exist
         ${{ if tool.postInstallCommands }}:
-          echo "Configuring ${{ tool.name }}..."
-          ${{ each command in tool.postInstallCommands }}:
-            ${{ command }}
-    displayName: Install and Configure Tools
+        echo "Configuring ${{ tool.name }}..."
+        ${{ each command in tool.postInstallCommands }}:
+        ${{ command }}
+        ${{ end }}
+      displayName: Install and Configure ${{ tool.name }}
+      condition: ne(variables['Agent.JobStatus'], 'Failed')
