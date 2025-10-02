@@ -60,9 +60,6 @@ steps:
                 - >-
                   sudo ln -sf $(Pipeline.Workspace)/.tools/bin/tfcmt
                   /usr/bin/tfcmt || true
-        condition: >-
-          and(succeeded(),
-          ne(variables['System.PullRequest.PullRequestNumber'], ''))
 
   - template: install-tools.yaml
     parameters:
