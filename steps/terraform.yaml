@@ -51,9 +51,7 @@ steps:
       - template: install-tools.yaml
         parameters:
           cacheKeyPrefix: "terraform-tools"
-          tools:
-            - name: tfcmt
-              downloadUrl: https://github.com/suzuki-shunsuke/tfcmt/releases/download/v4.14.12/tfcmt_linux_amd64.tar.gz
+          
 
   - template: install-tools.yaml
     parameters:
@@ -62,9 +60,8 @@ steps:
         - name: terraform-switcher
           downloadUrl: https://raw.githubusercontent.com/warrensbox/terraform-switcher/release/install.sh
           installScript: bash -s -- -b $(Pipeline.Workspace)/.tools/bin
-          postInstallCommands:
-            - export PATH=$(Pipeline.Workspace)/.tools/bin:$PATH
-            - $(Pipeline.Workspace)/.tools/bin/tfswitch -b $(Pipeline.Workspace)/.tools/bin/terraform
+        - name: tfcmt
+          downloadUrl: https://github.com/suzuki-shunsuke/tfcmt/releases/download/v4.14.12/tfcmt_linux_amd64.tar.gz
   - task: TerraformCLI@2
     displayName: Terraform initialize
     inputs:
