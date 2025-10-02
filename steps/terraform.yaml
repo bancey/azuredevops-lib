@@ -54,10 +54,6 @@ steps:
           tools:
             - name: tfcmt
               downloadUrl: https://github.com/suzuki-shunsuke/tfcmt/releases/download/v4.14.12/tfcmt_linux_amd64.tar.gz
-              postInstallCommands:
-                - >-
-                  sudo ln -sf $(Pipeline.Workspace)/.tools/bin/tfcmt
-                  /usr/bin/tfcmt || true
 
   - template: install-tools.yaml
     parameters:
@@ -67,11 +63,8 @@ steps:
           downloadUrl: https://raw.githubusercontent.com/warrensbox/terraform-switcher/release/install.sh
           installScript: bash -s -- -b $(Pipeline.Workspace)/.tools/bin
           postInstallCommands:
-            - echo '##vso[task.prependpath]$(Pipeline.Workspace)/.tools/bin'
             - export PATH=$(Pipeline.Workspace)/.tools/bin:$PATH
-            - >-
-              $(Pipeline.Workspace)/.tools/bin/tfswitch
-              -b $(Pipeline.Workspace)/.tools/bin/terraform
+            - $(Pipeline.Workspace)/.tools/bin/tfswitch -b $(Pipeline.Workspace)/.tools/bin/terraform
   - task: TerraformCLI@2
     displayName: Terraform initialize
     inputs:
