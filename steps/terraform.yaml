@@ -53,9 +53,7 @@ steps:
           cacheKeyPrefix: "terraform-tools"
           tools:
             - name: tfcmt
-              downloadUrl: >-
-                https://github.com/suzuki-shunsuke/tfcmt/releases/download/
-                v4.12.0/tfcmt_linux_amd64.tar.gz
+              downloadUrl: https://github.com/suzuki-shunsuke/tfcmt/releases/download/v4.14.12/tfcmt_linux_amd64.tar.gz
               postInstallCommands:
                 - >-
                   sudo ln -sf $(Pipeline.Workspace)/.tools/bin/tfcmt
@@ -66,9 +64,7 @@ steps:
       cacheKeyPrefix: "terraform-tools"
       tools:
         - name: terraform-switcher
-          downloadUrl: >-
-            https://raw.githubusercontent.com/warrensbox/
-            terraform-switcher/release/install.sh
+          downloadUrl: https://raw.githubusercontent.com/warrensbox/terraform-switcher/release/install.sh
           installScript: bash -s -- -b $(Pipeline.Workspace)/.tools/bin
           postInstallCommands:
             - echo '##vso[task.prependpath]$(Pipeline.Workspace)/.tools/bin'
