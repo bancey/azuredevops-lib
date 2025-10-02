@@ -47,11 +47,6 @@ steps:
       githubAppIdSecretName: GitHub-Bot-ID
       githubInstallationIdSecretName: GitHub-Bot-Installation-ID
       condition: and(succeeded(), ne(variables['System.PullRequest.PullRequestNumber'], ''))
-  - ${{ if eq(parameters.publishPlan, true) }}:
-      - template: install-tools.yaml
-        parameters:
-          cacheKeyPrefix: "terraform-tools"
-          
 
   - template: install-tools.yaml
     parameters:
@@ -60,8 +55,9 @@ steps:
         - name: terraform-switcher
           downloadUrl: https://raw.githubusercontent.com/warrensbox/terraform-switcher/release/install.sh
           installScript: bash -s -- -b $(Pipeline.Workspace)/.tools/bin
-        - name: tfcmt
-          downloadUrl: https://github.com/suzuki-shunsuke/tfcmt/releases/download/v4.14.12/tfcmt_linux_amd64.tar.gz
+        - ${{ if eq(parameters.publishPlan, true) }}:
+          - name: tfcmt
+            downloadUrl: https://github.com/suzuki-shunsuke/tfcmt/releases/download/v4.14.12/tfcmt_linux_amd64.tar.gz
   - task: TerraformCLI@2
     displayName: Terraform initialize
     inputs:
