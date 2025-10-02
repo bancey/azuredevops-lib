@@ -35,43 +35,43 @@ steps:
         set -e
         cd $(Pipeline.Workspace)/.tools
 
-        if [ "$(TOOLS_CACHE_RESTORED)" != "true" ]; then
-          echo "Installing $(TOOL_NAME)..."
+        if [ "$TOOLS_CACHE_RESTORED" != "true" ]; then
+          echo "Installing $TOOL_NAME..."
 
-          if [ -n "$(APT_PACKAGE)" ]; then
+          if [ -n "$APT_PACKAGE" ]; then
             # Install via apt
-            sudo apt update && sudo apt install -y $(APT_PACKAGE)
-          elif [ -n "$(DOWNLOAD_URL)" ]; then
-            if [ -n "$(INSTALL_SCRIPT)" ]; then
+            sudo apt update && sudo apt install -y $APT_PACKAGE
+          elif [ -n "$DOWNLOAD_URL" ]; then
+            if [ -n "$INSTALL_SCRIPT" ]; then
               # Use custom install script
-              curl -fL $(DOWNLOAD_URL) | $(INSTALL_SCRIPT)
-            elif [ "$(DIRECT_BINARY)" = "true" ]; then
+              curl -fL $DOWNLOAD_URL | $INSTALL_SCRIPT
+            elif [ "$DIRECT_BINARY" = "true" ]; then
               # Download direct binary
-              curl -fL -o bin/$(TOOL_NAME) $(DOWNLOAD_URL)
-              chmod +x bin/$(TOOL_NAME)
+              curl -fL -o bin/$TOOL_NAME $DOWNLOAD_URL
+              chmod +x bin/$TOOL_NAME
             else
               # Download and extract
-              curl -fL -o $(TOOL_NAME).tar.gz $(DOWNLOAD_URL)
-              tar -xzf $(TOOL_NAME).tar.gz
+              curl -fL -o $TOOL_NAME.tar.gz $DOWNLOAD_URL
+              tar -xzf $TOOL_NAME.tar.gz
 
               # Find the binary and move it
-              find . -name "$(TOOL_NAME)" -type f -executable | \
+              find . -name "$TOOL_NAME" -type f -executable | \
                 head -1 | xargs -I {} mv {} bin/
 
               # Clean up
-              rm -f $(TOOL_NAME).tar.gz
+              rm -f $TOOL_NAME.tar.gz
             fi
           fi
 
-          echo "$(TOOL_NAME) installation completed"
+          echo "$TOOL_NAME installation completed"
         else
-          echo "$(TOOL_NAME) restored from cache"
+          echo "$TOOL_NAME restored from cache"
         fi
 
         # Run post-install commands if they exist
-        if [ -n "$(POST_INSTALL_COMMANDS)" ]; then
-          echo "Configuring $(TOOL_NAME)..."
-          echo "$(POST_INSTALL_COMMANDS)" | while IFS= read -r command; do
+        if [ -n "$POST_INSTALL_COMMANDS" ]; then
+          echo "Configuring $TOOL_NAME..."
+          echo "$POST_INSTALL_COMMANDS" | while IFS= read -r command; do
             if [ -n "$command" ]; then
               eval "$command"
             fi
