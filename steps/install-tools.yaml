@@ -36,46 +36,53 @@ steps:
         cd $(Pipeline.Workspace)/.tools
 
         if [ "$(TOOLS_CACHE_RESTORED)" != "true" ]; then
-          echo "Installing ${{ tool.name }}..."
+          echo "Installing $(TOOL_NAME)..."
 
-          ${{ if tool.aptPackage }}:
-          # Install via apt
-          sudo apt update && sudo apt install -y ${{ tool.aptPackage }}
+          if [ -n "$(APT_PACKAGE)" ]; then
+            # Install via apt
+            sudo apt update && sudo apt install -y $(APT_PACKAGE)
+          elif [ -n "$(DOWNLOAD_URL)" ]; then
+            if [ -n "$(INSTALL_SCRIPT)" ]; then
+              # Use custom install script
+              curl -fL $(DOWNLOAD_URL) | $(INSTALL_SCRIPT)
+            elif [ "$(DIRECT_BINARY)" = "true" ]; then
+              # Download direct binary
+              curl -fL -o bin/$(TOOL_NAME) $(DOWNLOAD_URL)
+              chmod +x bin/$(TOOL_NAME)
+            else
+              # Download and extract
+              curl -fL -o $(TOOL_NAME).tar.gz $(DOWNLOAD_URL)
+              tar -xzf $(TOOL_NAME).tar.gz
 
-          ${{ elseif tool.downloadUrl }}:
-          ${{ if tool.installScript }}:
-          # Use custom install script
-          curl -fL ${{ tool.downloadUrl }} | ${{ tool.installScript }}
+              # Find the binary and move it
+              find . -name "$(TOOL_NAME)" -type f -executable | \
+                head -1 | xargs -I {} mv {} bin/
 
-          ${{ elseif tool.directBinary }}:
-          # Download direct binary
-          curl -fL -o bin/${{ tool.name }} ${{ tool.downloadUrl }}
-          chmod +x bin/${{ tool.name }}
+              # Clean up
+              rm -f $(TOOL_NAME).tar.gz
+            fi
+          fi
 
-          ${{ else }}:
-          # Download and extract
-          curl -fL -o ${{ tool.name }}.tar.gz ${{ tool.downloadUrl }}
-          tar -xzf ${{ tool.name }}.tar.gz
-
-          # Find the binary and move it
-          find . -name "${{ tool.name }}" -type f -executable | \
-            head -1 | xargs -I {} mv {} bin/
-
-          # Clean up
-          rm -f ${{ tool.name }}.tar.gz
-          ${{ end }}
-          ${{ end }}
-
-          echo "${{ tool.name }} installation completed"
+          echo "$(TOOL_NAME) installation completed"
         else
-          echo "${{ tool.name }} restored from cache"
+          echo "$(TOOL_NAME) restored from cache"
         fi
 
         # Run post-install commands if they exist
-        ${{ if tool.postInstallCommands }}:
-        echo "Configuring ${{ tool.name }}..."
-        ${{ each command in tool.postInstallCommands }}:
-        ${{ command }}
-        ${{ end }}
+        if [ -n "$(POST_INSTALL_COMMANDS)" ]; then
+          echo "Configuring $(TOOL_NAME)..."
+          echo "$(POST_INSTALL_COMMANDS)" | while IFS= read -r command; do
+            if [ -n "$command" ]; then
+              eval "$command"
+            fi
+          done
+        fi
       displayName: Install and Configure ${{ tool.name }}
       condition: ne(variables['Agent.JobStatus'], 'Failed')
+      env:
+        TOOL_NAME: ${{ tool.name }}
+        APT_PACKAGE: ${{ coalesce(tool.aptPackage, '') }}
+        DOWNLOAD_URL: ${{ coalesce(tool.downloadUrl, '') }}
+        INSTALL_SCRIPT: ${{ coalesce(tool.installScript, '') }}
+        DIRECT_BINARY: ${{ coalesce(tool.directBinary, 'false') }}
+        POST_INSTALL_COMMANDS: ${{ join('\n', coalesce(tool.postInstallCommands, '')) }}
