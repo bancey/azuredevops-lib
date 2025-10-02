@@ -15,12 +15,7 @@ steps:
         - name: age
           aptPackage: age
         - name: sops
-          downloadUrl: >-
-            https://github.com/getsops/sops/releases/download/
-            ${{ parameters.sopsVersion }}/
-            sops-${{ parameters.sopsVersion }}.linux.amd64
+          downloadUrl: https://github.com/getsops/sops/releases/download/${{ parameters.sopsVersion }}/sops-${{ parameters.sopsVersion }}.linux.amd64
           directBinary: true
           postInstallCommands:
-            - >-
-              sudo ln -sf $(Pipeline.Workspace)/.tools/bin/sops
-              /usr/local/bin/sops || true
+            - sudo ln -sf $(Pipeline.Workspace)/.tools/bin/sops /usr/local/bin/sops || true
