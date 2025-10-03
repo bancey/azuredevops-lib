@@ -32,7 +32,7 @@ steps:
   # Install each tool as a separate step
   - ${{ each tool in parameters.tools }}:
     - script: |
-        set -e
+        set -ex
         cd $(Pipeline.Workspace)/.tools
 
         if [ "$TOOLS_CACHE_RESTORED" != "true" ]; then
