@@ -9,6 +9,7 @@ parameters:
 steps:
   - script: |
       set -ex
+      ssh-ping --version
       if [[ "${{ parameters.addresses }}" == *","* ]]; then
         OUTPUT=true
         readarray -d , -t addressArr <<<"${{ parameters.addresses }}"
