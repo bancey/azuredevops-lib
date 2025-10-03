@@ -8,6 +8,7 @@ parameters:
 
 steps:
   - script: |
+      set -ex
       if [[ "${{ parameters.addresses }}" == *","* ]]; then
         OUTPUT=true
         readarray -d , -t addressArr <<<"${{ parameters.addresses }}"
