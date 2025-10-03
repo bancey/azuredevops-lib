@@ -37,13 +37,12 @@ steps:
           cacheHitVar: APT_DOWNLOADS_CACHED
 
   # Setup tools directory
-  - ${{ if or(ne(join(',', parameters.tools.*.downloadUrl), ''), ne(join(',', parameters.tools.*.installScript), '')) }}:  # yamllint disable-line rule:line-length
-    - script: |
-        set -e
-        mkdir -p $(Pipeline.Workspace)/.tools/bin
-        cd $(Pipeline.Workspace)/.tools
-        echo "##vso[task.prependpath]$(Pipeline.Workspace)/.tools/bin"
-      displayName: Setup Tools Directory
+  - script: |
+      set -e
+      mkdir -p $(Pipeline.Workspace)/.tools/bin
+      cd $(Pipeline.Workspace)/.tools
+      echo "##vso[task.prependpath]$(Pipeline.Workspace)/.tools/bin"
+    displayName: Setup Tools Directory
 
   # Install each tool as a separate step
   - ${{ each tool in parameters.tools }}:
