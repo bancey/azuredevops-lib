@@ -91,7 +91,7 @@ steps:
               if [ -n "$INSTALL_SCRIPT" ]; then
                 # Use custom install script
                 curl -fL $DOWNLOAD_URL | $INSTALL_SCRIPT
-              elif [ "$DIRECT_BINARY" = "true" ]; then
+              elif [ "$DIRECT_BINARY" = "true" ] || [ "$DIRECT_BINARY" = "True" ]; then
                 # Download direct binary
                 curl -fL -o bin/$TOOL_NAME $DOWNLOAD_URL
                 chmod +x bin/$TOOL_NAME
