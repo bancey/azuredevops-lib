@@ -8,7 +8,7 @@ parameters:
     default: "tools"
 
 steps:
-  # Cache tools directory
+  # Cache tools directory (for downloaded binaries)
   - task: Cache@2
     displayName: Cache Tools
     inputs:
@@ -20,6 +20,26 @@ steps:
         ${{ parameters.cacheKeyPrefix }}
       path: $(Pipeline.Workspace)/.tools
       cacheHitVar: TOOLS_CACHE_RESTORED
+    condition: >-
+      and(succeeded(),
+          or(ne(join(',', parameters.tools.*.downloadUrl), ''),
+             ne(join(',', parameters.tools.*.installScript), '')))
+
+  # Cache APT package downloads (for APT packages)
+  - task: Cache@2
+    displayName: Cache APT Downloads
+    inputs:
+      key: >-
+        apt-downloads | "$(Agent.OS)" |
+        ${{ join(',', parameters.tools.*.aptPackage) }}
+      restoreKeys: |
+        apt-downloads | "$(Agent.OS)"
+        apt-downloads
+      path: /var/cache/apt/archives
+      cacheHitVar: APT_DOWNLOADS_CACHED
+    condition: >-
+      and(succeeded(),
+          ne(join(',', parameters.tools.*.aptPackage), ''))
 
   # Setup tools directory
   - script: |
@@ -31,62 +51,79 @@ steps:
 
   # Install each tool as a separate step
   - ${{ each tool in parameters.tools }}:
-    - script: |
-        set -e
-        cd $(Pipeline.Workspace)/.tools
-        echo "$DIRECT_BINARY"
+      - script: |
+          set -e
+          cd $(Pipeline.Workspace)/.tools
+          echo "$DIRECT_BINARY"
 
-        if [ "$TOOLS_CACHE_RESTORED" != "true" ]; then
-          echo "Installing $TOOL_NAME..."
-
+          # APT packages can now benefit from download caching
           if [ -n "$APT_PACKAGE" ]; then
-            # Install via apt
-            sudo apt update && sudo apt install -y $APT_PACKAGE
-          elif [ -n "$DOWNLOAD_URL" ]; then
-            if [ -n "$INSTALL_SCRIPT" ]; then
-              # Use custom install script
-              curl -fL $DOWNLOAD_URL | $INSTALL_SCRIPT
-            elif [ "$DIRECT_BINARY" = "true" ]; then
-              # Download direct binary
-              curl -fL -o bin/$TOOL_NAME $DOWNLOAD_URL
-              chmod +x bin/$TOOL_NAME
+            echo "Installing/ensuring $TOOL_NAME via apt..."
+            # Check if package is already installed to avoid unnecessary
+            # operations
+            if ! dpkg -s $APT_PACKAGE >/dev/null 2>&1; then
+              # Update package lists only if APT downloads weren't cached
+              if [ "$APT_DOWNLOADS_CACHED" != "true" ]; then
+                echo "Updating package lists..."
+                sudo apt update
+              else
+                echo "Using cached package information"
+              fi
+
+              echo "Installing $APT_PACKAGE..."
+              sudo apt install -y $APT_PACKAGE
             else
-              # Download and extract
-              curl -fL -o $TOOL_NAME.tar.gz $DOWNLOAD_URL
-              tar -xzf $TOOL_NAME.tar.gz
-
-              # Find the binary and move it
-              find . -name "$TOOL_NAME" -type f -executable | \
-                head -1 | xargs -I {} mv {} bin/
-
-              # Clean up
-              rm -f $TOOL_NAME.tar.gz
+              echo "$APT_PACKAGE is already installed"
             fi
+          elif [ "$TOOLS_CACHE_RESTORED" != "true" ]; then
+            echo "Installing $TOOL_NAME..."
+
+            if [ -n "$DOWNLOAD_URL" ]; then
+              if [ -n "$INSTALL_SCRIPT" ]; then
+                # Use custom install script
+                curl -fL $DOWNLOAD_URL | $INSTALL_SCRIPT
+              elif [ "$DIRECT_BINARY" = "true" ]; then
+                # Download direct binary
+                curl -fL -o bin/$TOOL_NAME $DOWNLOAD_URL
+                chmod +x bin/$TOOL_NAME
+              else
+                # Download and extract
+                curl -fL -o $TOOL_NAME.tar.gz $DOWNLOAD_URL
+                tar -xzf $TOOL_NAME.tar.gz
+
+                # Find the binary and move it
+                find . -name "$TOOL_NAME" -type f -executable | \
+                  head -1 | xargs -I {} mv {} bin/
+
+                # Clean up
+                rm -f $TOOL_NAME.tar.gz
+              fi
+            fi
+
+            echo "$TOOL_NAME installation completed"
+          else
+            echo "$TOOL_NAME restored from cache"
           fi
 
-          echo "$TOOL_NAME installation completed"
-        else
-          echo "$TOOL_NAME restored from cache"
-        fi
+          # Run post-install commands if they exist
+          if [ -n "$POST_INSTALL_COMMANDS" ]; then
+            echo "Configuring $TOOL_NAME..."
+            echo "$POST_INSTALL_COMMANDS" | while IFS= read -r command; do
+              if [ -n "$command" ]; then
+                eval "$command"
+              fi
+            done
+          fi
 
-        # Run post-install commands if they exist
-        if [ -n "$POST_INSTALL_COMMANDS" ]; then
-          echo "Configuring $TOOL_NAME..."
-          echo "$POST_INSTALL_COMMANDS" | while IFS= read -r command; do
-            if [ -n "$command" ]; then
-              eval "$command"
-            fi
-          done
-        fi
-
-        # Ensure tools directory is on PATH for subsequent steps
-        echo "##vso[task.prependpath]$(Pipeline.Workspace)/.tools/bin"
-      displayName: Install and Configure ${{ tool.name }}
-      condition: ne(variables['Agent.JobStatus'], 'Failed')
-      env:
-        TOOL_NAME: ${{ tool.name }}
-        APT_PACKAGE: ${{ coalesce(tool.aptPackage, '') }}
-        DOWNLOAD_URL: ${{ coalesce(tool.downloadUrl, '') }}
-        INSTALL_SCRIPT: ${{ coalesce(tool.installScript, '') }}
-        DIRECT_BINARY: ${{ coalesce(tool.directBinary, 'false') }}
-        POST_INSTALL_COMMANDS: ${{ join('\n', coalesce(tool.postInstallCommands, '')) }}
+          # Ensure tools directory is on PATH for subsequent steps
+          echo "##vso[task.prependpath]$(Pipeline.Workspace)/.tools/bin"
+        displayName: Install and Configure ${{ tool.name }}
+        condition: ne(variables['Agent.JobStatus'], 'Failed')
+        env:
+          TOOL_NAME: ${{ tool.name }}
+          APT_PACKAGE: ${{ coalesce(tool.aptPackage, '') }}
+          DOWNLOAD_URL: ${{ coalesce(tool.downloadUrl, '') }}
+          INSTALL_SCRIPT: ${{ coalesce(tool.installScript, '') }}
+          DIRECT_BINARY: ${{ coalesce(tool.directBinary, 'false') }}
+          POST_INSTALL_COMMANDS: >-
+            ${{ join('\n', coalesce(tool.postInstallCommands, '')) }}

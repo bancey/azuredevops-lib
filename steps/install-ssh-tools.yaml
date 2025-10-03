@@ -10,18 +10,18 @@ parameters:
 steps:
   # Install OpenSSH client if requested
   ${{ if parameters.includeOpenSSH }}:
-  - template: install-tools.yaml
-    parameters:
-      cacheKeyPrefix: "ssh-tools-openssh"
-      tools:
-        - name: openssh-client
-          aptPackage: openssh-client
+    - template: install-tools.yaml
+      parameters:
+        cacheKeyPrefix: "ssh-tools-openssh"
+        tools:
+          - name: openssh-client
+            aptPackage: openssh-client
 
   # Install SSHPass if requested
   ${{ if parameters.includeSSHPass }}:
-  - template: install-tools.yaml
-    parameters:
-      cacheKeyPrefix: "ssh-tools-sshpass"
-      tools:
-        - name: sshpass
-          aptPackage: sshpass
+    - template: install-tools.yaml
+      parameters:
+        cacheKeyPrefix: "ssh-tools-sshpass"
+        tools:
+          - name: sshpass
+            aptPackage: sshpass

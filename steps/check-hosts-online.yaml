@@ -1,6 +1,9 @@
+---
 parameters:
   - name: hosts
-    displayName: List of objects with a name and an address property to check if hosts are powered on and can received traffic.
+    displayName: >-
+      List of objects with a name and an address property to check if hosts
+      are powered on and can received traffic.
     type: object
 
 steps:
@@ -10,7 +13,7 @@ steps:
         - name: ssh-tools
           aptPackage: ssh-tools
   - ${{ each host in parameters.hosts }}:
-    - template: check-host-online.yaml
-      parameters:
-        name: ${{ host.name }}
-        addresses: ${{ host.address }}
+      - template: check-host-online.yaml
+        parameters:
+          name: ${{ host.name }}
+          addresses: ${{ host.address }}
