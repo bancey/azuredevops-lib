@@ -34,6 +34,7 @@ steps:
     - script: |
         set -e
         cd $(Pipeline.Workspace)/.tools
+        echo "$DIRECT_BINARY"
 
         if [ "$TOOLS_CACHE_RESTORED" != "true" ]; then
           echo "Installing $TOOL_NAME..."
