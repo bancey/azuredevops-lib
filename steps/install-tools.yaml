@@ -9,37 +9,32 @@ parameters:
 
 steps:
   # Cache tools directory (for downloaded binaries)
-  - task: Cache@2
-    displayName: Cache Tools
-    inputs:
-      key: >-
-        ${{ parameters.cacheKeyPrefix }} |
-        "$(Agent.OS)" | tools
-      restoreKeys: |
-        ${{ parameters.cacheKeyPrefix }} | "$(Agent.OS)"
-        ${{ parameters.cacheKeyPrefix }}
-      path: $(Pipeline.Workspace)/.tools
-      cacheHitVar: TOOLS_CACHE_RESTORED
-    condition: >-
-      and(succeeded(),
-          or(ne(join(',', parameters.tools.*.downloadUrl), ''),
-             ne(join(',', parameters.tools.*.installScript), '')))
+  - ${{ if or(ne(join(',', parameters.tools.*.downloadUrl), ''), ne(join(',', parameters.tools.*.installScript), '')) }}:  # yamllint disable-line rule:line-length
+      - task: Cache@2
+        displayName: Cache Tools
+        inputs:
+          key: >-
+            ${{ parameters.cacheKeyPrefix }} |
+            "$(Agent.OS)" | tools
+          restoreKeys: |
+            ${{ parameters.cacheKeyPrefix }} | "$(Agent.OS)"
+            ${{ parameters.cacheKeyPrefix }}
+          path: $(Pipeline.Workspace)/.tools
+          cacheHitVar: TOOLS_CACHE_RESTORED
 
   # Cache APT package downloads (for APT packages)
-  - task: Cache@2
-    displayName: Cache APT Downloads
-    inputs:
-      key: >-
-        apt-downloads | "$(Agent.OS)" |
-        ${{ join(',', parameters.tools.*.aptPackage) }}
-      restoreKeys: |
-        apt-downloads | "$(Agent.OS)"
-        apt-downloads
-      path: /var/cache/apt/archives
-      cacheHitVar: APT_DOWNLOADS_CACHED
-    condition: >-
-      and(succeeded(),
-          ne(join(',', parameters.tools.*.aptPackage), ''))
+  - ${{ if ne(join(',', parameters.tools.*.aptPackage), '') }}:
+      - task: Cache@2
+        displayName: Cache APT Downloads
+        inputs:
+          key: >-
+            apt-downloads | "$(Agent.OS)" |
+            ${{ join(',', parameters.tools.*.aptPackage) }}
+          restoreKeys: |
+            apt-downloads | "$(Agent.OS)"
+            apt-downloads
+          path: /var/cache/apt/archives
+          cacheHitVar: APT_DOWNLOADS_CACHED
 
   # Setup tools directory
   - script: |
