@@ -33,7 +33,7 @@ steps:
           restoreKeys: |
             apt-downloads | "$(Agent.OS)"
             apt-downloads
-          path: /var/cache/apt/archives
+          path: $(Pipeline.Workspace)/.apt-cache
           cacheHitVar: APT_DOWNLOADS_CACHED
 
   # Setup tools directory
@@ -57,16 +57,30 @@ steps:
             # Check if package is already installed to avoid unnecessary
             # operations
             if ! dpkg -s $APT_PACKAGE >/dev/null 2>&1; then
-              # Update package lists only if APT downloads weren't cached
-              if [ "$APT_DOWNLOADS_CACHED" != "true" ]; then
+              # Setup APT cache directory if we have cached downloads
+              if [ "$APT_DOWNLOADS_CACHED" = "true" ] && \
+                 [ -d "$(Pipeline.Workspace)/.apt-cache" ]; then
+                echo "Setting up cached APT downloads..."
+                sudo mkdir -p /var/cache/apt/archives
+                sudo cp $(Pipeline.Workspace)/.apt-cache/*.deb \
+                  /var/cache/apt/archives/ 2>/dev/null || true
+                echo "Using cached package downloads"
+              else
                 echo "Updating package lists..."
                 sudo apt-get update
-              else
-                echo "Using cached package information"
               fi
 
               echo "Installing $APT_PACKAGE..."
               sudo apt-get install -y $APT_PACKAGE
+
+              # Cache any new downloads if this is the first run
+              if [ "$APT_DOWNLOADS_CACHED" != "true" ]; then
+                echo "Caching downloaded packages..."
+                mkdir -p $(Pipeline.Workspace)/.apt-cache
+                sudo cp /var/cache/apt/archives/*.deb \
+                  $(Pipeline.Workspace)/.apt-cache/ 2>/dev/null || true
+                sudo chown -R $(whoami) $(Pipeline.Workspace)/.apt-cache
+              fi
             else
               echo "$APT_PACKAGE is already installed"
             fi
