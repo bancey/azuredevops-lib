@@ -37,12 +37,13 @@ steps:
           cacheHitVar: APT_DOWNLOADS_CACHED
 
   # Setup tools directory
-  - script: |
-      set -e
-      mkdir -p $(Pipeline.Workspace)/.tools/bin
-      cd $(Pipeline.Workspace)/.tools
-      echo "##vso[task.prependpath]$(Pipeline.Workspace)/.tools/bin"
-    displayName: Setup Tools Directory
+  - ${{ if or(ne(join(',', parameters.tools.*.downloadUrl), ''), ne(join(',', parameters.tools.*.installScript), '')) }}:  # yamllint disable-line rule:line-length
+    - script: |
+        set -e
+        mkdir -p $(Pipeline.Workspace)/.tools/bin
+        cd $(Pipeline.Workspace)/.tools
+        echo "##vso[task.prependpath]$(Pipeline.Workspace)/.tools/bin"
+      displayName: Setup Tools Directory
 
   # Install each tool as a separate step
   - ${{ each tool in parameters.tools }}:
@@ -60,13 +61,13 @@ steps:
               # Update package lists only if APT downloads weren't cached
               if [ "$APT_DOWNLOADS_CACHED" != "true" ]; then
                 echo "Updating package lists..."
-                sudo apt update
+                sudo apt-get update
               else
                 echo "Using cached package information"
               fi
 
               echo "Installing $APT_PACKAGE..."
-              sudo apt install -y $APT_PACKAGE
+              sudo apt-get install -y $APT_PACKAGE
             else
               echo "$APT_PACKAGE is already installed"
             fi
