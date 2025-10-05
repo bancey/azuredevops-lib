@@ -1,0 +1,138 @@
+---
+parameters:
+  - name: tools
+    type: object
+    default: []
+  - name: cacheKeyPrefix
+    type: string
+    default: "tools"
+
+steps:
+  # Cache tools directory (for downloaded binaries)
+  - ${{ if or(ne(join(',', parameters.tools.*.downloadUrl), ''), ne(join(',', parameters.tools.*.installScript), '')) }}:  # yamllint disable-line rule:line-length
+      - task: Cache@2
+        displayName: Cache Tools
+        inputs:
+          key: >-
+            ${{ parameters.cacheKeyPrefix }} |
+            "$(Agent.OS)" | tools
+          restoreKeys: |
+            ${{ parameters.cacheKeyPrefix }} | "$(Agent.OS)"
+            ${{ parameters.cacheKeyPrefix }}
+          path: $(Pipeline.Workspace)/.tools
+          cacheHitVar: TOOLS_CACHE_RESTORED
+
+  # Cache APT package downloads (for APT packages)
+  - ${{ if ne(join(',', parameters.tools.*.aptPackage), '') }}:
+      - task: Cache@2
+        displayName: Cache APT Downloads
+        inputs:
+          key: >-
+            apt-downloads | "$(Agent.OS)" |
+            ${{ join(',', parameters.tools.*.aptPackage) }}
+          restoreKeys: |
+            apt-downloads | "$(Agent.OS)"
+            apt-downloads
+          path: $(Pipeline.Workspace)/.apt-cache
+          cacheHitVar: APT_DOWNLOADS_CACHED
+
+  # Setup tools directory
+  - script: |
+      set -e
+      mkdir -p $(Pipeline.Workspace)/.tools/bin
+      cd $(Pipeline.Workspace)/.tools
+      echo "##vso[task.prependpath]$(Pipeline.Workspace)/.tools/bin"
+    displayName: Setup Tools Directory
+
+  # Install each tool as a separate step
+  - ${{ each tool in parameters.tools }}:
+      - script: |
+          set -e
+          cd $(Pipeline.Workspace)/.tools
+          echo "$DIRECT_BINARY"
+
+          # APT packages can now benefit from download caching
+          if [ -n "$APT_PACKAGE" ]; then
+            echo "Installing/ensuring $TOOL_NAME via apt..."
+            # Check if package is already installed to avoid unnecessary
+            # operations
+            if ! dpkg -s $APT_PACKAGE >/dev/null 2>&1; then
+              # Setup APT cache directory if we have cached downloads
+              if [ "$APT_DOWNLOADS_CACHED" = "true" ] && \
+                 [ -d "$(Pipeline.Workspace)/.apt-cache" ]; then
+                echo "Setting up cached APT downloads..."
+                sudo mkdir -p /var/cache/apt/archives
+                sudo cp $(Pipeline.Workspace)/.apt-cache/*.deb \
+                  /var/cache/apt/archives/ 2>/dev/null || true
+                echo "Using cached package downloads"
+              else
+                echo "Updating package lists..."
+                sudo apt-get update
+              fi
+
+              echo "Installing $APT_PACKAGE..."
+              sudo apt-get install -y $APT_PACKAGE
+
+              # Cache any new downloads if this is the first run
+              if [ "$APT_DOWNLOADS_CACHED" != "true" ]; then
+                echo "Caching downloaded packages..."
+                mkdir -p $(Pipeline.Workspace)/.apt-cache
+                sudo cp /var/cache/apt/archives/*.deb \
+                  $(Pipeline.Workspace)/.apt-cache/ 2>/dev/null || true
+                sudo chown -R $(whoami) $(Pipeline.Workspace)/.apt-cache
+              fi
+            else
+              echo "$APT_PACKAGE is already installed"
+            fi
+          elif [ "$TOOLS_CACHE_RESTORED" != "true" ]; then
+            echo "Installing $TOOL_NAME..."
+
+            if [ -n "$DOWNLOAD_URL" ]; then
+              if [ -n "$INSTALL_SCRIPT" ]; then
+                # Use custom install script
+                curl -fL $DOWNLOAD_URL | $INSTALL_SCRIPT
+              elif [ "$DIRECT_BINARY" = "true" ] || [ "$DIRECT_BINARY" = "True" ]; then
+                # Download direct binary
+                curl -fL -o bin/$TOOL_NAME $DOWNLOAD_URL
+                chmod +x bin/$TOOL_NAME
+              else
+                # Download and extract
+                curl -fL -o $TOOL_NAME.tar.gz $DOWNLOAD_URL
+                tar -xzf $TOOL_NAME.tar.gz
+
+                # Find the binary and move it
+                find . -name "$TOOL_NAME" -type f -executable | \
+                  head -1 | xargs -I {} mv {} bin/
+
+                # Clean up
+                rm -f $TOOL_NAME.tar.gz
+              fi
+            fi
+
+            echo "$TOOL_NAME installation completed"
+          else
+            echo "$TOOL_NAME restored from cache"
+          fi
+
+          # Run post-install commands if they exist
+          if [ -n "$POST_INSTALL_COMMANDS" ]; then
+            echo "Configuring $TOOL_NAME..."
+            echo "$POST_INSTALL_COMMANDS" | while IFS= read -r command; do
+              if [ -n "$command" ]; then
+                eval "$command"
+              fi
+            done
+          fi
+
+          # Ensure tools directory is on PATH for subsequent steps
+          echo "##vso[task.prependpath]$(Pipeline.Workspace)/.tools/bin"
+        displayName: Install and Configure ${{ tool.name }}
+        condition: ne(variables['Agent.JobStatus'], 'Failed')
+        env:
+          TOOL_NAME: ${{ tool.name }}
+          APT_PACKAGE: ${{ coalesce(tool.aptPackage, '') }}
+          DOWNLOAD_URL: ${{ coalesce(tool.downloadUrl, '') }}
+          INSTALL_SCRIPT: ${{ coalesce(tool.installScript, '') }}
+          DIRECT_BINARY: ${{ coalesce(tool.directBinary, 'false') }}
+          POST_INSTALL_COMMANDS: >-
+            ${{ join('\n', coalesce(tool.postInstallCommands, '')) }}

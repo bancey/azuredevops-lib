@@ -47,27 +47,20 @@ steps:
       githubAppIdSecretName: GitHub-Bot-ID
       githubInstallationIdSecretName: GitHub-Bot-Installation-ID
       condition: and(succeeded(), ne(variables['System.PullRequest.PullRequestNumber'], ''))
-  - ${{ if eq(parameters.publishPlan, true) }}:
-      - script: |
-          TFCMT_VERSION=v4.12.0
-          curl -fL -o tfcmt.tar.gz https://github.com/suzuki-shunsuke/tfcmt/releases/download/$TFCMT_VERSION/tfcmt_linux_amd64.tar.gz
 
-          if command -v sudo &> /dev/null
-          then
-            sudo tar -C /usr/bin -xzf ./tfcmt.tar.gz tfcmt
-          else
-            tar -C /usr/bin -xzf ./tfcmt.tar.gz tfcmt
-          fi
-        displayName: Install tfcmt
-        condition: and(succeeded(), ne(variables['System.PullRequest.PullRequestNumber'], ''))
-  - script: |
-      curl -L https://raw.githubusercontent.com/warrensbox/terraform-switcher/release/install.sh | bash -s -- -b  ~/.local/bin
-      set -x
-      echo '##vso[task.prependpath]$(HOME)/.local/bin'
-      export PATH=$HOME/.local/bin:$PATH
-      tfswitch -b ~/.local/bin/terraform
-    displayName: Install tfswitch
-    workingDirectory: ${{ parameters.workingDirectory }}
+  - template: install-tools.yaml
+    parameters:
+      cacheKeyPrefix: "terraform-tools"
+      tools:
+        - name: terraform-switcher
+          downloadUrl: https://raw.githubusercontent.com/warrensbox/terraform-switcher/release/install.sh
+          installScript: bash -s -- -b $(Pipeline.Workspace)/.tools/bin
+          postInstallCommands: |
+            cd ${{ parameters.workingDirectory }}
+            tfswitch -b $(Pipeline.Workspace)/.tools/bin/terraform
+        - ${{ if eq(parameters.publishPlan, true) }}:
+          - name: tfcmt
+            downloadUrl: https://github.com/suzuki-shunsuke/tfcmt/releases/download/v4.14.12/tfcmt_linux_amd64.tar.gz
   - task: TerraformCLI@2
     displayName: Terraform initialize
     inputs:

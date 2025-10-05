@@ -8,6 +8,8 @@ parameters:
 
 steps:
   - script: |
+      set -e
+      echo "Checking online status of ${{ parameters.name }} (${{ parameters.addresses }})..."
       if [[ "${{ parameters.addresses }}" == *","* ]]; then
         OUTPUT=true
         readarray -d , -t addressArr <<<"${{ parameters.addresses }}"

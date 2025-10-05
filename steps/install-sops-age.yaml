@@ -1,0 +1,21 @@
+---
+parameters:
+  - name: sopsVersion
+    type: string
+    default: "v3.10.2"
+  - name: ageVersion
+    type: string
+    default: "v1.2.0"
+
+steps:
+  - template: install-tools.yaml
+    parameters:
+      cacheKeyPrefix: "sops-age"
+      tools:
+        - name: age
+          aptPackage: age
+        - name: sops
+          downloadUrl: https://github.com/getsops/sops/releases/download/${{ parameters.sopsVersion }}/sops-${{ parameters.sopsVersion }}.linux.amd64
+          directBinary: true
+          postInstallCommands:
+            - sudo ln -sf $(Pipeline.Workspace)/.tools/bin/sops /usr/local/bin/sops || true
