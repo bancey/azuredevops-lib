@@ -1,0 +1,50 @@
+---
+extends: default
+
+rules:
+  # Azure DevOps templates often have long lines
+  line-length:
+    max: 200
+    level: warning
+
+  # Allow inline mappings for Azure DevOps template syntax
+  braces:
+    max-spaces-inside: 1
+    level: warning
+
+  # Azure DevOps uses templates with specific indentation
+  indentation:
+    spaces: 2
+    indent-sequences: true
+
+  # Allow empty values for Azure DevOps parameters with defaults
+  empty-values:
+    forbid-in-block-mappings: false
+    forbid-in-flow-mappings: false
+
+  # Azure DevOps templates use anchors and aliases
+  anchors:
+    forbid-undeclared-aliases: true
+    forbid-duplicated-anchors: true
+
+  # Allow duplicate keys for Azure DevOps template overrides
+  key-duplicates: disable
+
+  # Comments are important in templates
+  comments:
+    min-spaces-from-content: 1
+
+  # Allow truthy values common in Azure DevOps
+  truthy:
+    allowed-values: ['true', 'false', 'yes', 'no', 'on', 'off']
+    check-keys: false
+
+  # Allow document start for some files
+  document-start: disable
+
+  # Allow new lines for compatibility
+  new-lines:
+    type: unix
+
+  # Allow trailing spaces to be fixed automatically
+  trailing-spaces: enable

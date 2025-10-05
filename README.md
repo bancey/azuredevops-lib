@@ -1,5 +1,10 @@
 # azuredevops-lib
 
+[![YAML Lint](https://github.com/bancey/azuredevops-lib/actions/workflows/yaml-lint.yml/badge.svg)](https://github.com/bancey/azuredevops-lib/actions/workflows/yaml-lint.yml)
+[![Validate Templates](https://github.com/bancey/azuredevops-lib/actions/workflows/validate-templates.yml/badge.svg)](https://github.com/bancey/azuredevops-lib/actions/workflows/validate-templates.yml)
+[![Documentation Check](https://github.com/bancey/azuredevops-lib/actions/workflows/documentation-check.yml/badge.svg)](https://github.com/bancey/azuredevops-lib/actions/workflows/documentation-check.yml)
+[![CI](https://github.com/bancey/azuredevops-lib/actions/workflows/ci.yml/badge.svg)](https://github.com/bancey/azuredevops-lib/actions/workflows/ci.yml)
+
 A comprehensive collection of reusable Azure DevOps pipeline templates and components for infrastructure automation, configuration management, and CI/CD workflows.
 
 ## 🎯 Project Scope
@@ -154,6 +159,17 @@ steps:
 
 We welcome contributions to improve and extend this library! Here's how you can help:
 
+### Continuous Integration
+
+This repository uses GitHub Actions for automated testing and validation:
+
+- **YAML Linting**: Validates YAML syntax and style across all templates
+- **Template Validation**: Checks YAML structure and parsing
+- **Documentation Checks**: Lints markdown files and validates links
+- **CI Summary**: Provides comprehensive status on all checks
+
+All workflows run automatically on pull requests and pushes to the main branch. You can see the status of these checks in the Actions tab or on your pull request.
+
 ### Getting Started
 
 1. **Fork the repository** on GitHub
@@ -200,13 +216,28 @@ steps:
 
 1. **Validate YAML syntax**:
    ```bash
-   # Use your preferred YAML validator
-   python -c "import yaml; yaml.safe_load(open('path/to/your/template.yaml'))"
+   # Install yamllint
+   pip install yamllint
+
+   # Run yamllint on all files
+   yamllint -f parsable -c .yamllint.yml .
    ```
 
-2. **Test in a pipeline**: Create a test pipeline in your Azure DevOps organization to validate functionality
+2. **Validate YAML structure**:
+   ```bash
+   # Install PyYAML
+   pip install pyyaml
 
-3. **Document your changes**: Update this README if you're adding new components or changing existing behavior
+   # Check all YAML files
+   find . -type f \( -name "*.yaml" -o -name "*.yml" \) ! -path "./.git/*" | while read file; do
+     echo "Checking: $file"
+     python -c "import yaml; yaml.safe_load(open('$file'))"
+   done
+   ```
+
+3. **Test in a pipeline**: Create a test pipeline in your Azure DevOps organization to validate functionality
+
+4. **Document your changes**: Update this README if you're adding new components or changing existing behavior
 
 ### Submitting Changes
 

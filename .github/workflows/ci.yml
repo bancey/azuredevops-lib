@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  ci-summary:
+    name: CI Summary
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: CI Status
+        run: |
+          echo "✅ Running CI checks for azuredevops-lib"
+          echo "📦 Repository: ${{ github.repository }}"
+          echo "🔀 Branch: ${{ github.ref_name }}"
+          echo "👤 Actor: ${{ github.actor }}"
+
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            echo "🔍 PR #${{ github.event.pull_request.number }}: ${{ github.event.pull_request.title }}"
+          fi

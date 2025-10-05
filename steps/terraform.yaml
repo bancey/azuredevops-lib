@@ -59,8 +59,8 @@ steps:
             cd ${{ parameters.workingDirectory }}
             tfswitch -b $(Pipeline.Workspace)/.tools/bin/terraform
         - ${{ if eq(parameters.publishPlan, true) }}:
-          - name: tfcmt
-            downloadUrl: https://github.com/suzuki-shunsuke/tfcmt/releases/download/v4.14.12/tfcmt_linux_amd64.tar.gz
+            - name: tfcmt
+              downloadUrl: https://github.com/suzuki-shunsuke/tfcmt/releases/download/v4.14.12/tfcmt_linux_amd64.tar.gz
   - task: TerraformCLI@2
     displayName: Terraform initialize
     inputs:
