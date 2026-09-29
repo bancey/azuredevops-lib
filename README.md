@@ -68,6 +68,7 @@ steps:
   - template: steps/ansible.yaml@azuredevops-lib
     parameters:
       playbook: playbooks/configure-servers.yml
+      verbosity: -vvv
       requirementsFile: requirements.yml
       keyVaultName: my-keyvault
       privateKeySecretName: ansible-ssh-key
