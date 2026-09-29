@@ -1,0 +1,40 @@
+name: Validate Templates
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '**.yaml'
+      - '**.yml'
+      - '.github/workflows/validate-templates.yml'
+
+jobs:
+  validate-yaml-syntax:
+    name: Validate YAML Syntax
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install PyYAML
+        run: |
+          pip install pyyaml
+
+      - name: Validate YAML files
+        run: |
+          echo "Validating YAML syntax for all templates..."
+          find . -type f \( -name "*.yaml" -o -name "*.yml" \) ! -path "./.git/*" | while read file; do
+            echo "Checking: $file"
+            python -c "import yaml, sys; yaml.safe_load(open('$file'))" || exit 1
+          done
+          echo "✅ All YAML files are valid!"
